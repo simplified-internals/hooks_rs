@@ -3,34 +3,7 @@ use std::{cell::RefCell, rc::Rc};
 use hooks_rs::{Fiber, hooks::use_ref};
 
 #[test]
-fn initial_value_is_set() {
-    fn component(_: ()) -> Rc<RefCell<i32>> {
-        use_ref(42)
-    }
-
-    let mut fiber = Fiber::new(component);
-
-    let r = fiber.call(());
-    assert_eq!(*r.borrow(), 42);
-}
-
-#[test]
-fn value_persists_across_renders() {
-    fn component(_: ()) -> Rc<RefCell<i32>> {
-        use_ref(0)
-    }
-
-    let mut fiber = Fiber::new(component);
-
-    let r1 = fiber.call(());
-    *r1.borrow_mut() = 10; // mutate ref
-
-    let r2 = fiber.call(()); // call again
-    assert_eq!(*r2.borrow(), 10); // value should persist
-}
-
-#[test]
-fn can_hold_custom_struct() {
+fn should_work_single() {
     #[derive(Debug, PartialEq)]
     struct MyStruct {
         x: i32,

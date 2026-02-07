@@ -1,10 +1,10 @@
 use hooks_rs::{Fiber, hooks::use_state};
 
 #[test]
-fn shouldnt_share_state() {
+fn different_fibers_shouldnt_share_state() {
     fn counter(_: ()) -> i32 {
         let (count, set_count) = use_state(|| 0);
-        set_count(count + 1);
+        set_count(&|prev| prev + 1);
         count
     }
 

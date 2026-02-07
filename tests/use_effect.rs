@@ -1,8 +1,8 @@
-use hooks_rs::{Fiber, hooks::use_effect};
+use hooks_rs::{Fiber, hooks::use_effect, utils::DynEq};
 use std::sync::atomic::{AtomicU64, Ordering};
 
 #[test]
-fn run_on_dep_change() {
+fn should_work_single() {
     static CALLS: AtomicU64 = AtomicU64::new(0);
 
     fn component(dep: i32) -> () {
@@ -16,12 +16,15 @@ fn run_on_dep_change() {
 
     let mut fiber = Fiber::new(|dep| component(dep));
 
+    // Should run on mount
     fiber.call(1);
     assert_eq!(CALLS.load(Ordering::Relaxed), 1);
 
+    // Shouldn't run if deps don t change
     fiber.call(1);
     assert_eq!(CALLS.load(Ordering::Relaxed), 1);
 
+    // Should run if props do change
     fiber.call(2);
     assert_eq!(CALLS.load(Ordering::Relaxed), 2);
 
@@ -30,7 +33,7 @@ fn run_on_dep_change() {
 }
 
 #[test]
-fn deps_are_custom() {
+fn any_deps_should_work() {
     static CALLS: AtomicU64 = AtomicU64::new(0);
 
     #[derive(PartialEq, Debug)]
@@ -38,23 +41,28 @@ fn deps_are_custom() {
         x: i32,
     }
 
-    fn component(dep: MyStruct) {
+    fn component(deps: Vec<Box<dyn DynEq>>) {
         use_effect(
             &mut || {
                 CALLS.fetch_add(1, Ordering::Relaxed);
             },
-            vec![Box::new(dep)],
+            deps,
         );
     }
 
-    let mut fiber = Fiber::new(|dep| component(dep));
+    let mut fiber = Fiber::new(|deps| component(deps));
 
-    fiber.call(MyStruct { x: 1 });
+    fiber.call(vec![Box::new(MyStruct { x: 1 }), Box::new(1)]);
     assert_eq!(CALLS.load(Ordering::Relaxed), 1);
 
-    fiber.call(MyStruct { x: 1 }); // same → no run
+    // Shouldn't run if same deps
+    fiber.call(vec![Box::new(MyStruct { x: 1 }), Box::new(1)]);
     assert_eq!(CALLS.load(Ordering::Relaxed), 1);
 
-    fiber.call(MyStruct { x: 2 }); // changed → runs
+    // Shoul run if deps change
+    fiber.call(vec![Box::new(MyStruct { x: 2 }), Box::new(1)]);
     assert_eq!(CALLS.load(Ordering::Relaxed), 2);
+
+    fiber.call(vec![Box::new(MyStruct { x: 2 }), Box::new(2)]);
+    assert_eq!(CALLS.load(Ordering::Relaxed), 3);
 }
