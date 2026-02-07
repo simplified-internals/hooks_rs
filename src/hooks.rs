@@ -21,7 +21,7 @@ impl Display for Hooks {
 }
 
 #[track_caller]
-pub fn use_state<S>(initial: impl FnOnce() -> S) -> (S, impl Fn(S))
+pub fn use_state<S>(initial: impl FnOnce() -> S) -> (S, impl Fn(&dyn Fn(&S) -> S))
 where
     S: 'static + Clone,
 {
@@ -50,7 +50,7 @@ where
             other => panic!("Expected `use_state` hook, but got `{other}`. This may happen when calling hooks conditionally. ({})",location),
         };
 
-        let setter = move |new_state: S| {
+       let setter = move |generator: &dyn Fn(&S) -> S| {
             CURRENT_FIBER.with(|f| {
                 let fiber_state = unsafe { &mut *f.borrow().unwrap() };
 
@@ -58,10 +58,12 @@ where
                     unreachable!();
                 };
 
+                let current_state = value.downcast_ref::<S>().unwrap();
+                let new_state = generator(current_state);
                 *value = Box::new(new_state);
             });
         };
-
+        
         (state, setter)
     })
 }
