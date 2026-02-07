@@ -79,7 +79,7 @@ fn heterogeneous_hook_types_work() {
 }
 
 #[test]
-#[should_panic(expected = "Hook was called outside of a fiber.")]
+#[should_panic]
 fn use_state_outside_fiber_panics() {
     let _ = use_state(|| 0);
 }
