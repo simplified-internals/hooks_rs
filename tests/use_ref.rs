@@ -1,6 +1,6 @@
 use std::{cell::RefCell, rc::Rc};
 
-use hooks_rs::{Fiber, hooks::use_ref};
+use hooks_rs::{Fiber, use_ref};
 
 #[test]
 fn should_work_single() {
@@ -15,11 +15,11 @@ fn should_work_single() {
 
     let mut fiber = Fiber::new(component);
 
-    let r1 = fiber.call(());
+    let r1 = fiber(());
     assert_eq!(r1.borrow().x, 5);
 
     r1.borrow_mut().x = 20;
-    let r2 = fiber.call(());
+    let r2 = fiber(());
     assert_eq!(r2.borrow().x, 20);
 }
 
@@ -33,11 +33,11 @@ fn multiple_refs_in_same_component() {
 
     let mut fiber = Fiber::new(component);
 
-    let (a1, b1) = fiber.call(());
+    let (a1, b1) = fiber(());
     *a1.borrow_mut() = 10;
     *b1.borrow_mut() = 20;
 
-    let (a2, b2) = fiber.call(());
+    let (a2, b2) = fiber(());
     assert_eq!(*a2.borrow(), 10);
     assert_eq!(*b2.borrow(), 20);
 }

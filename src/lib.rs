@@ -1,27 +1,18 @@
+#![feature(unboxed_closures, fn_traits)]
+
+// Public modules
 pub mod error;
-pub mod fiber;
-pub mod hooks;
-pub mod utils;
 
-pub use fiber::Fiber;
+// Internal modules
+mod fiber;
+mod hooks;
+mod utils;
 
-// Utilities
+// Public, curated API surface
+pub use error::FiberStoreError;
 
-use crate::{error::FiberStoreError, fiber::FiberStore};
-use std::cell::RefCell;
+pub use fiber::{Fiber, FiberTree, mount_fiber, render_fiber, unmount_fiber};
 
-thread_local! {
-    pub static FIBER_STORE: RefCell<FiberStore> = RefCell::new(FiberStore::new());
-}
+pub use hooks::{SetStateAction, use_effect, use_ref, use_state};
 
-/// Calls a fiber or initializes it. Fails if there's a fiber at provided `id` that doesn't match `fun`.
-pub fn render_fiber<P: 'static, R: 'static>(
-    id: u32,
-    fun: fn(P) -> R,
-    props: P,
-) -> Result<R, FiberStoreError> {
-    FIBER_STORE.with(|store| {
-        let mut store = store.borrow_mut();
-        store.mount_or_call(id, fun, props)
-    })
-}
+pub use utils::DynEq;

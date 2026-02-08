@@ -1,4 +1,4 @@
-use hooks_rs::{Fiber, hooks::use_effect, utils::DynEq};
+use hooks_rs::{DynEq, Fiber, use_effect};
 use std::sync::atomic::{AtomicU64, Ordering};
 
 #[test]
@@ -17,18 +17,18 @@ fn should_work_single() {
     let mut fiber = Fiber::new(|dep| component(dep));
 
     // Should run on mount
-    fiber.call(1);
+    fiber(1);
     assert_eq!(CALLS.load(Ordering::Relaxed), 1);
 
     // Shouldn't run if deps don t change
-    fiber.call(1);
+    fiber(1);
     assert_eq!(CALLS.load(Ordering::Relaxed), 1);
 
     // Should run if props do change
-    fiber.call(2);
+    fiber(2);
     assert_eq!(CALLS.load(Ordering::Relaxed), 2);
 
-    fiber.call(3);
+    fiber(3);
     assert_eq!(CALLS.load(Ordering::Relaxed), 3);
 }
 
@@ -52,17 +52,17 @@ fn any_deps_should_work() {
 
     let mut fiber = Fiber::new(|deps| component(deps));
 
-    fiber.call(vec![Box::new(MyStruct { x: 1 }), Box::new(1)]);
+    fiber(vec![Box::new(MyStruct { x: 1 }), Box::new(1)]);
     assert_eq!(CALLS.load(Ordering::Relaxed), 1);
 
     // Shouldn't run if same deps
-    fiber.call(vec![Box::new(MyStruct { x: 1 }), Box::new(1)]);
+    fiber(vec![Box::new(MyStruct { x: 1 }), Box::new(1)]);
     assert_eq!(CALLS.load(Ordering::Relaxed), 1);
 
     // Shoul run if deps change
-    fiber.call(vec![Box::new(MyStruct { x: 2 }), Box::new(1)]);
+    fiber(vec![Box::new(MyStruct { x: 2 }), Box::new(1)]);
     assert_eq!(CALLS.load(Ordering::Relaxed), 2);
 
-    fiber.call(vec![Box::new(MyStruct { x: 2 }), Box::new(2)]);
+    fiber(vec![Box::new(MyStruct { x: 2 }), Box::new(2)]);
     assert_eq!(CALLS.load(Ordering::Relaxed), 3);
 }

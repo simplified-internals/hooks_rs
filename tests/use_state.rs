@@ -1,6 +1,6 @@
 use std::sync::atomic::{AtomicU64, Ordering};
 
-use hooks_rs::{Fiber, hooks::use_state};
+use hooks_rs::{Fiber, use_state};
 
 #[test]
 fn should_work_single() {
@@ -12,10 +12,10 @@ fn should_work_single() {
 
     let mut fiber = Fiber::new(counter);
 
-    assert_eq!(fiber.call(()), 0);
-    assert_eq!(fiber.call(()), 1);
-    assert_eq!(fiber.call(()), 2);
-    assert_eq!(fiber.call(()), 3);
+    assert_eq!(fiber(()), 0);
+    assert_eq!(fiber(()), 1);
+    assert_eq!(fiber(()), 2);
+    assert_eq!(fiber(()), 3);
 }
 
 #[test]
@@ -35,9 +35,9 @@ fn should_work_multiple() {
 
     let mut fiber = Fiber::new(component);
 
-    assert_eq!(fiber.call(()), (MyNumber(0), "hi".into()));
-    assert_eq!(fiber.call(()), (MyNumber(1), "hi!".into()));
-    assert_eq!(fiber.call(()), (MyNumber(2), "hi!!".into()));
+    assert_eq!(fiber(()), (MyNumber(0), "hi".into()));
+    assert_eq!(fiber(()), (MyNumber(1), "hi!".into()));
+    assert_eq!(fiber(()), (MyNumber(2), "hi!!".into()));
 }
 
 #[test]
@@ -55,9 +55,8 @@ fn initial_should_be_called_once() {
 
     let mut fiber = Fiber::new(component);
 
-    assert_eq!(fiber.call(()), 42);
-    assert_eq!(fiber.call(()), 42);
-    assert_eq!(fiber.call(()), 42);
+    assert_eq!(fiber(()), 42);
+    assert_eq!(fiber(()), 42);
 
     assert_eq!(CALLS.load(Ordering::Relaxed), 1);
 }
