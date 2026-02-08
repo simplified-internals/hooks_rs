@@ -1,6 +1,4 @@
-use std::rc::Rc;
-
-use hooks_rs::{mount_fiber, render_fiber, use_state};
+use hooks_rs::{render_fiber, use_state};
 use iced::{Element, widget::column};
 
 use crate::{
@@ -45,13 +43,9 @@ fn App(_: ()) -> Element<'static, Message> {
     let (input, set_input) = use_state(String::new);
     let (filter, set_filter) = use_state(|| Filter::All);
 
-    let set_filter = Rc::new(set_filter);
-    let set_tasks = Rc::new(set_tasks);
-    let set_input = Rc::new(set_input);
-
     column![
         Header(),
-        NewTaskInput((input.clone(), set_input, set_tasks.clone())),
+        NewTaskInput((input.clone(), set_input, set_tasks)),
         Controls((tasks.clone(), filter, set_filter)),
         TaskList((tasks, set_tasks, filter)),
     ]

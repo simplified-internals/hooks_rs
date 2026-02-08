@@ -1,26 +1,18 @@
-use std::rc::Rc;
-
+use hooks_rs::SetStateAction;
 use iced::{Element, widget::text_input};
 
 use crate::{Message, tasks::Task};
 
 #[allow(non_snake_case)]
 pub fn NewTaskInput(
-    props: (
-        String,
-        Rc<dyn Fn(&dyn Fn(&String) -> String)>,
-        Rc<dyn Fn(&dyn Fn(&Vec<Task>) -> Vec<Task>)>,
-    ),
+    props: (String, SetStateAction<String>, SetStateAction<Vec<Task>>),
 ) -> Element<'static, Message> {
     let (value, set_value, set_tasks) = props;
 
     text_input("What needs to be done?", &value)
-        .on_input({
-            let set_value = set_value.clone();
-            move |v| {
-                set_value(&|_| v.clone());
-                Message::Refresh
-            }
+        .on_input(move |v| {
+            set_value(&|_| v.clone());
+            Message::Refresh
         })
         .on_submit_with(move || {
             if !value.is_empty() {

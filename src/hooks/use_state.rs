@@ -47,12 +47,21 @@ where
     (state, setter)
 }
 
-#[derive(Clone)]
 pub struct SetStateAction<S> {
     fiber_ptr: *mut FiberState,
     hook_index: usize,
     _marker: std::marker::PhantomData<S>,
 }
+
+// Manual Clone impl
+impl<S> Clone for SetStateAction<S> {
+    fn clone(&self) -> Self {
+        *self // use Copy in the impl
+    }
+}
+
+// Manual Copy impl
+impl<S> Copy for SetStateAction<S> {}
 
 impl<S: Clone + 'static> SetStateAction<S> {
     fn set(&self, f: &dyn Fn(&S) -> S) {

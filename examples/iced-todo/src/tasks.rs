@@ -1,9 +1,6 @@
-use std::{
-    rc::Rc,
-    sync::atomic::{AtomicU32, Ordering},
-};
+use std::sync::atomic::{AtomicU32, Ordering};
 
-use hooks_rs::{render_fiber, unmount_fiber, use_state};
+use hooks_rs::{SetStateAction, render_fiber, unmount_fiber, use_state};
 use iced::{
     Element,
     widget::{button, checkbox, keyed_column, row, text_input},
@@ -32,11 +29,7 @@ impl Task {
 
 #[allow(non_snake_case)]
 pub fn TaskList(
-    props: (
-        Vec<Task>,
-        Rc<dyn Fn(&dyn Fn(&Vec<Task>) -> Vec<Task>)>,
-        Filter,
-    ),
+    props: (Vec<Task>, SetStateAction<Vec<Task>>, Filter),
 ) -> Element<'static, Message> {
     let (tasks, set_tasks, filter) = props;
 
@@ -45,7 +38,7 @@ pub fn TaskList(
     keyed_column(visible.map(|task| {
         (
             task.id,
-            render_fiber(task.id, TaskItem, (task.clone(), set_tasks.clone())).unwrap(),
+            render_fiber(task.id, TaskItem, (task.clone(), set_tasks)).unwrap(),
         )
     }))
     .spacing(10)
@@ -53,9 +46,7 @@ pub fn TaskList(
 }
 
 #[allow(non_snake_case)]
-fn TaskItem(
-    props: (Task, Rc<dyn Fn(&dyn Fn(&Vec<Task>) -> Vec<Task>)>),
-) -> Element<'static, Message> {
+fn TaskItem(props: (Task, SetStateAction<Vec<Task>>)) -> Element<'static, Message> {
     let (task, set_tasks) = props;
     let (editing, set_editing) = use_state(|| false);
 
@@ -69,26 +60,23 @@ fn TaskItem(
                     set_text(&|_| v.clone());
                     Message::Refresh
                 })
-                .on_submit_with({
-                    let set_tasks = set_tasks.clone();
-                    move || {
-                        set_tasks(&|prev| {
-                            prev.iter()
-                                .map(|t| {
-                                    if t.id == task.id {
-                                        Task {
-                                            description: text.clone(),
-                                            ..t.clone()
-                                        }
-                                    } else {
-                                        t.clone()
+                .on_submit_with(move || {
+                    set_tasks(&|prev| {
+                        prev.iter()
+                            .map(|t| {
+                                if t.id == task.id {
+                                    Task {
+                                        description: text.clone(),
+                                        ..t.clone()
                                     }
-                                })
-                                .collect()
-                        });
-                        set_editing(&|_| false);
-                        Message::Refresh
-                    }
+                                } else {
+                                    t.clone()
+                                }
+                            })
+                            .collect()
+                    });
+                    set_editing(&|_| false);
+                    Message::Refresh
                 }),
             button("Delete").on_press_with(move || {
                 set_tasks(&|prev| {
