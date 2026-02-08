@@ -1,0 +1,8 @@
+[package]
+name = "iced-todo"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+iced = { git = "https://github.com/rarescovei5/iced", branch = "feat/text_input-on_submit_with" }
+hooks-rs = { path = "../../" }
