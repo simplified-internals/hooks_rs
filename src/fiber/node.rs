@@ -5,12 +5,17 @@ use crate::fiber::{FiberState, state::CURRENT_FIBER_STATE};
 pub struct Fiber<P, R> {
     pub(crate) fun: fn(P) -> R,
     pub(crate) state: FiberState,
+    pub(crate) is_dirty: bool,
 }
 
 impl<P, R> Fiber<P, R> {
     pub fn new(fun: fn(P) -> R) -> Self {
         let state = FiberState::new();
-        Self { fun, state }
+        Self {
+            fun,
+            state,
+            is_dirty: false,
+        }
     }
 }
 
@@ -59,8 +64,9 @@ impl<P, R> FnMut<(P,)> for Fiber<P, R> {
 
 pub(crate) trait ErasedFiber: Any {
     fn state_mut(&mut self) -> &mut FiberState;
-    fn as_any(&self) -> &dyn Any;
     fn as_any_mut(&mut self) -> &mut dyn Any;
+    fn is_dirty(&self) -> bool;
+    fn set_dirty(&mut self, is_dirty: bool);
 }
 
 impl<P, R> ErasedFiber for Fiber<P, R>
@@ -71,12 +77,13 @@ where
     fn state_mut(&mut self) -> &mut FiberState {
         &mut self.state
     }
-
-    fn as_any(&self) -> &dyn Any {
-        self
-    }
-
     fn as_any_mut(&mut self) -> &mut dyn Any {
         self
+    }
+    fn is_dirty(&self) -> bool {
+        self.is_dirty
+    }
+    fn set_dirty(&mut self, is_dirty: bool) {
+        self.is_dirty = is_dirty;
     }
 }

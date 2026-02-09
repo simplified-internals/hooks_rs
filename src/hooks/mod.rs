@@ -7,8 +7,6 @@ pub use use_effect::*;
 pub use use_ref::*;
 pub use use_state::*;
 
-use crate::utils::DynEq;
-
 /// Internal Hooks enum
 use std::{any::Any, fmt::Display, rc::Rc};
 
@@ -26,4 +24,15 @@ impl Display for Hooks {
             Hooks::UseRef { current: _ } => f.write_str("use_ref(..)"),
         }
     }
+}
+
+use crate::{
+    fiber::{CURRENT_FIBER_STATE, FiberState},
+    utils::DynEq,
+};
+pub(crate) fn read_fiber_state(msg: &str) -> &'static mut FiberState {
+    CURRENT_FIBER_STATE.with(|f| {
+        let fiber_state = unsafe { &mut *f.borrow().expect(msg) };
+        fiber_state
+    })
 }
