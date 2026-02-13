@@ -1,7 +1,13 @@
+use std::any::TypeId;
+
 use crate::{
-    hooks::{Hooks, read_fiber_state},
+    hooks::{Hook, read_fiber_state},
     utils::{DynEq, deps_changed},
 };
+
+pub(crate) struct UseEffect {
+    deps: Vec<Box<dyn DynEq>>,
+}
 
 #[track_caller]
 pub fn use_effect(effect: &mut impl FnMut(), deps: Vec<Box<dyn DynEq>>) {
@@ -17,22 +23,24 @@ pub fn use_effect(effect: &mut impl FnMut(), deps: Vec<Box<dyn DynEq>>) {
 
     if idx >= fiber_state.hooks.len() {
         // MOUNT LOGIC HERE
-        fiber_state.hooks.push(Hooks::UseEffect { deps });
+        fiber_state.hooks.push(Hook {
+            type_id: TypeId::of::<UseEffect>(),
+            state: Box::new(UseEffect { deps }),
+        });
         effect();
         return;
     }
 
     // UPDATE LOGIC HERE
-    let prev_deps = match &mut fiber_state.hooks[idx] {
-        Hooks::UseEffect { deps: prev_deps } => prev_deps,
-        other => panic!(
-            "Expected `use_hook` hook, but got `{other}`. This may happen when calling hooks conditionally. ({})",
-            location
-        ),
-    };
+    let hook = &mut fiber_state.hooks[idx];
+    if hook.type_id != TypeId::of::<UseEffect>() {
+        panic!("Expected `use_effect` hook, but got `{:?}`.", hook.type_id);
+    }
+    let use_effect = hook.state.downcast_mut::<UseEffect>().unwrap();
+    let prev_deps = &use_effect.deps;
 
     if deps_changed(prev_deps, &deps) {
         effect();
-        *prev_deps = deps;
+        use_effect.deps = deps;
     }
 }

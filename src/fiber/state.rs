@@ -1,4 +1,4 @@
-use crate::hooks::Hooks;
+use crate::hooks::Hook;
 use std::cell::RefCell;
 
 thread_local! {
@@ -6,7 +6,7 @@ thread_local! {
 }
 
 pub(crate) struct FiberState {
-    pub(crate) hooks: Vec<Hooks>,
+    pub(crate) hooks: Vec<Hook>,
     pub(crate) hook_index: usize,
 }
 

@@ -1,7 +1,13 @@
+use std::any::TypeId;
+
 use crate::{
     fiber::FiberState,
-    hooks::{Hooks, read_fiber_state},
+    hooks::{Hook, read_fiber_state},
 };
+
+pub(crate) struct UseState<S> {
+    value: S,
+}
 
 /// Declares a stateful value that persists across renders.
 ///
@@ -61,21 +67,19 @@ where
 
     if idx >= fiber_state.hooks.len() {
         // MOUNT LOGIC HERE
-        fiber_state.hooks.push(Hooks::UseState {
-            value: Box::new(initial()),
+        fiber_state.hooks.push(Hook {
+            type_id: TypeId::of::<UseState<S>>(),
+            state: Box::new(UseState { value: initial() }),
         });
     }
 
     // UPDATE LOGIC HERE
-    let state = {
-        match &fiber_state.hooks[idx] {
-            Hooks::UseState { value } => value.downcast_ref::<S>().unwrap().clone(),
-            other => panic!(
-                "Expected `use_state` hook, but got `{other}`. This may happen when calling hooks conditionally. ({})",
-                location
-            ),
-        }
-    };
+    let hook = &fiber_state.hooks[idx];
+    if hook.type_id != TypeId::of::<UseState<S>>() {
+        panic!("Expected `use_state` hook, but got `{:?}`.", hook.type_id);
+    }
+    let use_state = hook.state.downcast_ref::<UseState<S>>().unwrap();
+    let state = use_state.value.clone();
 
     let setter = SetStateAction::<S> {
         fiber_ptr: &mut *fiber_state,
@@ -98,11 +102,12 @@ impl<S: Clone + 'static> SetStateAction<S> {
     fn set(&self, f: &dyn Fn(&S) -> S) {
         unsafe {
             let fiber = &mut *self.fiber_ptr;
-            let Hooks::UseState { value } = &mut fiber.hooks[self.hook_index] else {
-                unreachable!()
-            };
-            let current = value.downcast_ref::<S>().unwrap();
-            *value = Box::new(f(current));
+            let hook = &mut fiber.hooks[self.hook_index];
+            if hook.type_id != TypeId::of::<UseState<S>>() {
+                panic!("Expected `use_state` hook, but got `{:?}`.", hook.type_id);
+            }
+            let use_state = hook.state.downcast_mut::<UseState<S>>().unwrap();
+            use_state.value = f(&use_state.value);
         }
     }
 }

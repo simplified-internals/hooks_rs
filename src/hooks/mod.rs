@@ -8,28 +8,14 @@ pub use use_ref::*;
 pub use use_state::*;
 
 /// Internal Hooks enum
-use std::{any::Any, fmt::Display, rc::Rc};
+use std::any::{Any, TypeId};
 
-pub(crate) enum Hooks {
-    UseEffect { deps: Vec<Box<dyn DynEq>> },
-    UseState { value: Box<dyn Any> },
-    UseRef { current: Rc<dyn Any> },
+pub struct Hook {
+    pub(crate) type_id: TypeId,
+    pub(crate) state: Box<dyn Any>,
 }
 
-impl Display for Hooks {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        match self {
-            Hooks::UseState { value: _ } => f.write_str("use_state(..)"),
-            Hooks::UseEffect { deps: _ } => f.write_str("use_effect(..)"),
-            Hooks::UseRef { current: _ } => f.write_str("use_ref(..)"),
-        }
-    }
-}
-
-use crate::{
-    fiber::{CURRENT_FIBER_STATE, FiberState},
-    utils::DynEq,
-};
+use crate::fiber::{CURRENT_FIBER_STATE, FiberState};
 pub(crate) fn read_fiber_state(msg: &str) -> &'static mut FiberState {
     CURRENT_FIBER_STATE.with(|f| {
         let fiber_state = unsafe { &mut *f.borrow().expect(msg) };
