@@ -1,12 +1,13 @@
 use std::sync::atomic::{AtomicU32, Ordering};
 
-use hooks_rs::{SetStateAction, render_fiber, unmount_fiber, use_state};
-use iced::{
-    Element,
-    widget::{button, checkbox, keyed_column, row, text_input},
-};
+use hooks_rs::{use_context, use_state};
+use iced::widget::{button, checkbox, row, text_input};
 
-use crate::{Message, controls::Filter};
+use crate::{
+    Message,
+    components::{FILTER_CTX, TASKS_CTX},
+    react::VNode,
+};
 
 pub static TASK_ID: AtomicU32 = AtomicU32::new(1);
 
@@ -28,33 +29,31 @@ impl Task {
 }
 
 #[allow(non_snake_case)]
-pub fn TaskList(
-    props: (Vec<Task>, SetStateAction<Vec<Task>>, Filter),
-) -> Element<'static, Message> {
-    let (tasks, set_tasks, filter) = props;
+pub fn TaskList(_: ()) -> VNode<Message> {
+    let (tasks, _) = use_context(*TASKS_CTX);
+    let (filter, _) = use_context(*FILTER_CTX);
 
-    let visible = tasks.iter().filter(|t| filter.matches(t));
+    let mut items = Vec::new();
 
-    keyed_column(visible.map(|task| {
-        (
-            task.id,
-            render_fiber(task.id, TaskItem, (task.clone(), set_tasks)).unwrap(),
-        )
-    }))
-    .spacing(10)
-    .into()
+    for task in tasks.into_iter().filter(|t| filter.matches(t)) {
+        let key = task.id.to_string();
+        items.push((task.id, VNode::component(key, TaskItem, task)));
+    }
+
+    VNode::keyed_column(items, 10)
 }
 
 #[allow(non_snake_case)]
-fn TaskItem(props: (Task, SetStateAction<Vec<Task>>)) -> Element<'static, Message> {
-    let (task, set_tasks) = props;
+fn TaskItem(task: Task) -> VNode<Message> {
+    let (_, set_tasks) = use_context(*TASKS_CTX);
+
     let (editing, set_editing) = use_state(|| false);
 
     let description = task.description.clone();
     let (text, set_text) = use_state(move || description);
 
     if editing {
-        row![
+        VNode::element(row![
             text_input("Edit task", &text)
                 .on_input(move |v| {
                     set_text(&|_| v.clone());
@@ -79,18 +78,15 @@ fn TaskItem(props: (Task, SetStateAction<Vec<Task>>)) -> Element<'static, Messag
                     Message::Refresh
                 }),
             button("Delete").on_press_with(move || {
-                set_tasks(&|prev| {
-                    unmount_fiber(task.id);
-                    prev.iter().filter(|t| t.id != task.id).cloned().collect()
-                });
+                set_tasks(&|prev| prev.iter().filter(|t| t.id != task.id).cloned().collect());
                 Message::Refresh
             })
-        ]
-        .into()
+        ])
     } else {
-        row![
+        let task_description = task.description.clone();
+        VNode::element(row![
             checkbox(task.completed)
-                .label(task.description)
+                .label(task_description)
                 .on_toggle(move |v| {
                     set_tasks(&|prev| {
                         prev.iter()
@@ -112,7 +108,6 @@ fn TaskItem(props: (Task, SetStateAction<Vec<Task>>)) -> Element<'static, Messag
                 set_editing(&|_| true);
                 Message::Refresh
             })
-        ]
-        .into()
+        ])
     }
 }
