@@ -1,4 +1,4 @@
-use std::{any::TypeId, cell::RefCell, rc::Rc};
+use std::{any::TypeId, cell::RefCell, intrinsics::caller_location, rc::Rc};
 
 use crate::hooks::{Hook, read_fiber_state};
 
@@ -6,8 +6,9 @@ pub(crate) struct UseRef<S> {
     current: Rc<RefCell<S>>,
 }
 
+#[track_caller]
 pub fn use_ref<S: 'static>(initial_value: S) -> Rc<RefCell<S>> {
-    let location = std::panic::Location::caller();
+    let location = caller_location();
 
     let fiber_state = read_fiber_state(&format!(
         "Hook `use_ref` was called outside of a fiber. ({})",

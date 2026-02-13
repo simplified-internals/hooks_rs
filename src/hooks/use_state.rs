@@ -1,4 +1,4 @@
-use std::any::TypeId;
+use std::{any::TypeId, intrinsics::caller_location};
 
 use crate::{
     fiber::FiberState,
@@ -55,7 +55,7 @@ pub fn use_state<S>(initial: impl FnOnce() -> S) -> (S, SetStateAction<S>)
 where
     S: 'static + Clone,
 {
-    let location = std::panic::Location::caller();
+    let location = caller_location();
 
     let fiber_state = read_fiber_state(&format!(
         "Hook `use_state` was called outside of a fiber. ({})",
@@ -120,6 +120,9 @@ impl<S> Clone for SetStateAction<S> {
     }
 }
 impl<S> Copy for SetStateAction<S> {}
+
+unsafe impl<S> Send for SetStateAction<S> {}
+unsafe impl<S> Sync for SetStateAction<S> {}
 
 // --------------------------- Fn Traits so SetStateAction can be used like a closure
 impl<S: Clone + 'static> FnOnce<(&dyn Fn(&S) -> S,)> for SetStateAction<S> {

@@ -2,10 +2,10 @@ use std::fmt::Display;
 
 #[derive(Debug)]
 pub enum FiberStoreError {
-    FiberAlreadyExists(u32),
-    FiberDoesntExist(u32),
-    FiberTypeMismatch(u32),
-    ParentDoesNotExist(u32),
+    FiberAlreadyExists(String),
+    FiberDoesntExist(String),
+    FiberTypeMismatch(String),
+    ParentDoesNotExist(String),
 }
 
 impl Display for FiberStoreError {

@@ -1,13 +1,8 @@
 use crate::hooks::Hook;
-use std::cell::RefCell;
 
-thread_local! {
-    pub(crate) static CURRENT_FIBER_STATE: RefCell<Option<*mut FiberState>> = RefCell::new(None);
-}
-
-pub(crate) struct FiberState {
-    pub(crate) hooks: Vec<Hook>,
-    pub(crate) hook_index: usize,
+pub struct FiberState {
+    pub hooks: Vec<Hook>,
+    pub hook_index: usize,
 }
 
 impl FiberState {

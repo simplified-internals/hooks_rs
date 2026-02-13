@@ -1,24 +1,35 @@
 // Hooks implementations
-mod use_effect;
-mod use_ref;
-mod use_state;
-
-pub use use_effect::*;
-pub use use_ref::*;
-pub use use_state::*;
+pub mod use_context;
+pub mod use_effect;
+pub mod use_ref;
+pub mod use_state;
 
 /// Internal Hooks enum
 use std::any::{Any, TypeId};
 
 pub struct Hook {
-    pub(crate) type_id: TypeId,
-    pub(crate) state: Box<dyn Any>,
+    pub type_id: TypeId,
+    pub state: Box<dyn Any>,
 }
 
-use crate::fiber::{CURRENT_FIBER_STATE, FiberState};
-pub(crate) fn read_fiber_state(msg: &str) -> &'static mut FiberState {
-    CURRENT_FIBER_STATE.with(|f| {
-        let fiber_state = unsafe { &mut *f.borrow().expect(msg) };
-        fiber_state
-    })
+use crate::fiber::{CURRENT_FIBER_ID, FIBER_TREE, FiberState};
+
+/// Returns the current fiber's state by resolving the active fiber id.
+pub fn read_fiber_state(msg: &str) -> &'static mut FiberState {
+    let id = CURRENT_FIBER_ID
+        .with(|cell| cell.borrow().clone())
+        .unwrap_or_else(|| panic!("{msg}"));
+
+    let fiber_rc = FIBER_TREE.with(|t| {
+        let tree = t.borrow();
+        let node = tree.0.get(&id).unwrap_or_else(|| panic!("{msg}"));
+        node.fiber.clone()
+    });
+
+    let state_ptr = {
+        let mut fiber_any = fiber_rc.borrow_mut();
+        fiber_any.state_ptr_mut()
+    };
+
+    unsafe { &mut *state_ptr }
 }

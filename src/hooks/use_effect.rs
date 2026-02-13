@@ -1,4 +1,4 @@
-use std::any::TypeId;
+use std::{any::TypeId, intrinsics::caller_location};
 
 use crate::{
     hooks::{Hook, read_fiber_state},
@@ -11,7 +11,7 @@ pub(crate) struct UseEffect {
 
 #[track_caller]
 pub fn use_effect(effect: &mut impl FnMut(), deps: Vec<Box<dyn DynEq>>) {
-    let location = std::panic::Location::caller();
+    let location = caller_location();
 
     let fiber_state = read_fiber_state(&format!(
         "Hook `use_effect` was called outside of a fiber. ({})",

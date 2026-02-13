@@ -1,11 +1,11 @@
-use hooks_rs::{DynEq, Fiber, use_effect};
+use hooks_rs::{DynEq, call_fiber, mount_fiber, use_effect};
 use std::sync::atomic::{AtomicU64, Ordering};
 
 #[test]
 fn should_work_single() {
     static CALLS: AtomicU64 = AtomicU64::new(0);
 
-    fn component(dep: i32) -> () {
+    fn component(dep: i32) {
         use_effect(
             &mut || {
                 CALLS.fetch_add(1, Ordering::Relaxed);
@@ -14,21 +14,23 @@ fn should_work_single() {
         );
     }
 
-    let mut fiber = Fiber::new(|dep| component(dep));
+    mount_fiber(None, "root", |dep| component(dep)).unwrap();
 
     // Should run on mount
-    fiber(1);
+    let component = |deps| call_fiber::<i32, ()>("root", deps).unwrap();
+
+    component(1);
     assert_eq!(CALLS.load(Ordering::Relaxed), 1);
 
     // Shouldn't run if deps don t change
-    fiber(1);
+    component(1);
     assert_eq!(CALLS.load(Ordering::Relaxed), 1);
 
     // Should run if props do change
-    fiber(2);
+    component(2);
     assert_eq!(CALLS.load(Ordering::Relaxed), 2);
 
-    fiber(3);
+    component(3);
     assert_eq!(CALLS.load(Ordering::Relaxed), 3);
 }
 
@@ -50,19 +52,21 @@ fn any_deps_should_work() {
         );
     }
 
-    let mut fiber = Fiber::new(|deps| component(deps));
+    mount_fiber(None, "root", |deps| component(deps)).unwrap();
 
-    fiber(vec![Box::new(MyStruct { x: 1 }), Box::new(1)]);
+    let component = |deps| call_fiber::<Vec<Box<dyn DynEq>>, ()>("root", deps).unwrap();
+
+    component(vec![Box::new(MyStruct { x: 1 }), Box::new(1)]);
     assert_eq!(CALLS.load(Ordering::Relaxed), 1);
 
     // Shouldn't run if same deps
-    fiber(vec![Box::new(MyStruct { x: 1 }), Box::new(1)]);
+    component(vec![Box::new(MyStruct { x: 1 }), Box::new(1)]);
     assert_eq!(CALLS.load(Ordering::Relaxed), 1);
 
     // Shoul run if deps change
-    fiber(vec![Box::new(MyStruct { x: 2 }), Box::new(1)]);
+    component(vec![Box::new(MyStruct { x: 2 }), Box::new(1)]);
     assert_eq!(CALLS.load(Ordering::Relaxed), 2);
 
-    fiber(vec![Box::new(MyStruct { x: 2 }), Box::new(2)]);
+    component(vec![Box::new(MyStruct { x: 2 }), Box::new(2)]);
     assert_eq!(CALLS.load(Ordering::Relaxed), 3);
 }
