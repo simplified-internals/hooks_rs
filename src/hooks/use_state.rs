@@ -1,7 +1,7 @@
 use std::{any::TypeId, intrinsics::caller_location};
 
 use crate::{
-    fiber::FiberState,
+    fiber::HooksState,
     hooks::{Hook, read_fiber_state},
 };
 
@@ -93,7 +93,7 @@ where
 /// --------------------------- React.Dispatch<SetStateAction<T>> from wish
 
 pub struct SetStateAction<S> {
-    fiber_ptr: *mut FiberState,
+    fiber_ptr: *mut HooksState,
     hook_index: usize,
     _marker: std::marker::PhantomData<S>,
 }

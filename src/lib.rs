@@ -5,18 +5,23 @@ mod fiber;
 mod hooks;
 mod utils;
 
-// API surface
+// ------------------------------------ API surface ------------------------------------
+
+// ----------------- Errors
 pub use error::FiberStoreError;
 
-pub use fiber::FiberState;
+// ----------------- Fiber Management
 pub use fiber::{call_fiber, get_children_ids, get_parent_id, mount_fiber, unmount_fiber};
 
-// Utils for letting users create their own hooks;
+// ----------------- Hooks
+
+// --- Hook Creation
 pub use hooks::{Hook, read_fiber_state};
-// ------ Default hooks
+pub use fiber::HooksState;
+
+// --- Default hooks
 pub use hooks::use_context::{Context, create_context, provide_context, use_context};
 pub use hooks::use_effect::use_effect;
+pub use utils::DynEq;
 pub use hooks::use_ref::use_ref;
 pub use hooks::use_state::{SetStateAction, use_state};
-
-pub use utils::DynEq;

@@ -1,5 +1,5 @@
 mod state;
-pub use state::FiberState;
+pub use state::HooksState;
 
 mod node;
 pub(crate) use node::*;

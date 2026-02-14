@@ -12,10 +12,10 @@ pub struct Hook {
     pub state: Box<dyn Any>,
 }
 
-use crate::fiber::{CURRENT_FIBER_ID, FIBER_TREE, FiberState};
+use crate::fiber::{CURRENT_FIBER_ID, FIBER_TREE, HooksState};
 
 /// Returns the current fiber's state by resolving the active fiber id.
-pub fn read_fiber_state(msg: &str) -> &'static mut FiberState {
+pub fn read_fiber_state(msg: &str) -> &'static mut HooksState {
     let id = CURRENT_FIBER_ID
         .with(|cell| cell.borrow().clone())
         .unwrap_or_else(|| panic!("{msg}"));
