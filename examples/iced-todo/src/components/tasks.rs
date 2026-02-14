@@ -56,11 +56,11 @@ fn TaskItem(task: Task) -> VNode<Message> {
         VNode::element(row![
             text_input("Edit task", &text)
                 .on_input(move |v| {
-                    set_text(&|_| v.clone());
+                    set_text(|_| v.clone());
                     Message::Refresh
                 })
                 .on_submit_with(move || {
-                    set_tasks(&|prev| {
+                    set_tasks(|prev| {
                         prev.iter()
                             .map(|t| {
                                 if t.id == task.id {
@@ -74,11 +74,11 @@ fn TaskItem(task: Task) -> VNode<Message> {
                             })
                             .collect()
                     });
-                    set_editing(&|_| false);
+                    set_editing(|_| false);
                     Message::Refresh
                 }),
             button("Delete").on_press_with(move || {
-                set_tasks(&|prev| prev.iter().filter(|t| t.id != task.id).cloned().collect());
+                set_tasks(|prev| prev.iter().filter(|t| t.id != task.id).cloned().collect());
                 Message::Refresh
             })
         ])
@@ -88,7 +88,7 @@ fn TaskItem(task: Task) -> VNode<Message> {
             checkbox(task.completed)
                 .label(task_description)
                 .on_toggle(move |v| {
-                    set_tasks(&|prev| {
+                    set_tasks(|prev| {
                         prev.iter()
                             .map(|t| {
                                 if t.id == task.id {
@@ -105,7 +105,7 @@ fn TaskItem(task: Task) -> VNode<Message> {
                     Message::Refresh
                 }),
             button("Edit").on_press_with(move || {
-                set_editing(&|_| true);
+                set_editing(|_| true);
                 Message::Refresh
             })
         ])

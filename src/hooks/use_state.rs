@@ -125,22 +125,32 @@ unsafe impl<S> Send for SetStateAction<S> {}
 unsafe impl<S> Sync for SetStateAction<S> {}
 
 // --------------------------- Fn Traits so SetStateAction can be used like a closure
-impl<S: Clone + 'static> FnOnce<(&dyn Fn(&S) -> S,)> for SetStateAction<S> {
+impl<S, F> FnOnce<(F,)> for SetStateAction<S>
+where
+    S: Clone + 'static,
+    F: Fn(&'_ S) -> S,
+{
     type Output = ();
 
-    extern "rust-call" fn call_once(self, args: (&dyn Fn(&S) -> S,)) -> Self::Output {
-        self.set(args.0)
+    extern "rust-call" fn call_once(self, args: (F,)) -> Self::Output {
+        self.set(&args.0)
     }
 }
 
-impl<S: Clone + 'static> FnMut<(&dyn Fn(&S) -> S,)> for SetStateAction<S> {
-    extern "rust-call" fn call_mut(&mut self, args: (&dyn Fn(&S) -> S,)) -> Self::Output {
-        self.set(args.0)
+impl<S: Clone + 'static, F> FnMut<(F,)> for SetStateAction<S>
+where
+    F: Fn(&'_ S) -> S,
+{
+    extern "rust-call" fn call_mut(&mut self, args: (F,)) -> Self::Output {
+        self.set(&args.0)
     }
 }
 
-impl<S: Clone + 'static> Fn<(&dyn Fn(&S) -> S,)> for SetStateAction<S> {
-    extern "rust-call" fn call(&self, args: (&dyn Fn(&S) -> S,)) -> Self::Output {
-        self.set(args.0)
+impl<S: Clone + 'static, F> Fn<(F,)> for SetStateAction<S>
+where
+    F: Fn(&'_ S) -> S,
+{
+    extern "rust-call" fn call(&self, args: (F,)) -> Self::Output {
+        self.set(&args.0)
     }
 }

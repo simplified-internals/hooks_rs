@@ -83,7 +83,7 @@ fn filter_button(props: (&'static str, Filter)) -> VNode<Message> {
             .style(style)
             .padding(8)
             .on_press_with(move || {
-                set_current_filter(&|_| filter);
+                set_current_filter(|_| filter);
                 Message::Refresh
             }),
     )

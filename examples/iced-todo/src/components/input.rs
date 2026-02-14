@@ -15,17 +15,17 @@ pub fn NewTaskInput(_: ()) -> VNode<Message> {
     VNode::element(
         text_input("What needs to be done?", &input)
             .on_input(move |v| {
-                set_input(&|_| v.clone());
+                set_input(|_| v.clone());
                 Message::Refresh
             })
             .on_submit_with(move || {
                 if !input.is_empty() {
-                    set_tasks(&|prev| {
+                    set_tasks(|prev| {
                         let mut next = prev.clone();
                         next.push(Task::new(input.clone()));
                         next
                     });
-                    set_input(&|_| String::new());
+                    set_input(|_| String::new());
                 }
                 Message::Refresh
             })

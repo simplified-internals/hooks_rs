@@ -6,7 +6,7 @@ use hooks_rs::{call_fiber, mount_fiber, use_state};
 fn should_work_single() {
     fn counter(_: ()) -> i32 {
         let (count, set_count) = use_state(|| 0);
-        set_count(&|prev| prev + 1);
+        set_count(|prev| prev + 1);
         count
     }
 
@@ -29,8 +29,8 @@ fn should_work_multiple() {
         let (count, set_count) = use_state(|| MyNumber(0));
         let (text, set_text) = use_state(|| String::from("hi"));
 
-        set_count(&|prev| MyNumber(prev.0 + 1));
-        set_text(&|prev_text| format!("{prev_text}!"));
+        set_count(|prev| MyNumber(prev.0 + 1));
+        set_text(|prev_text| format!("{prev_text}!"));
 
         (count, text)
     }

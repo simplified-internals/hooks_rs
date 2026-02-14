@@ -1,8 +1,7 @@
 use std::sync::LazyLock;
 
 use hooks_rs::{
-    Context, FiberStoreError, call_fiber, create_context, mount_fiber, provide_context,
-    unmount_fiber, use_context,
+    Context, FiberStoreError, call_fiber, create_context, mount_fiber, provide_context, use_context,
 };
 
 static CTX: LazyLock<Context<i32>> = LazyLock::new(|| create_context());
